@@ -16,7 +16,11 @@ public class Client {
 //            new TaskClient(i + " second");
 //            new TaskClient(i + " third");
 //        }
-        new TaskClient("Second", 1);
+//        new TaskClient("Third", 1, "Submit");
+//        new TaskClient("Third-2", 2, "Submit");
+//        Thread.sleep(200);
+        new TaskClient("Second", 3, "Subscribe");
+//        new TaskClient("Fourth", 4, "List");
     }
 }
 
@@ -25,18 +29,24 @@ class TaskClient extends Thread{
     String clientId;
     long requestId;
     Socket socket;
+    String task;
 
-    TaskClient(String clientId, long requestId){
+    TaskClient(String clientId, long requestId, String task){
         this.clientId = clientId;
         this.requestId = requestId;
-        run();
+        this.task = task;
+        start();
     }
 
     public void run(){
-//        sendMassageAndTakeResponse(makeServerRequest(makeSubmitTask()));
-//        sendMassageAndTakeResponse(makeServerRequest(makeSubscribeTask(3)));
+        if (task.equals("Subscribe")) {
+            sendMassageAndTakeResponse(makeServerRequest(makeSubscribeTask(2)));
+        } else if (task.equals("Submit")) {
+            sendMassageAndTakeResponse(makeServerRequest(makeSubmitTask()));
+        } else {
+            sendMassageAndTakeResponse(makeServerRequest(makeListTask()));
+        }
 //        sendMassageAndTakeResponse(makeServerRequest(makeSubscribeTask(6)));
-        sendMassageAndTakeResponse(makeServerRequest(makeListTask()));
     }
 
     void sendMassageAndTakeResponse(ServerRequest request) {
@@ -45,9 +55,10 @@ class TaskClient extends Thread{
 
             //Пишем
             SendMessageToServer(request);
-
+            System.out.println("<<<  " + task + "  >>>");
             // читаем ответ
             ServerResponse serverResponse = getServerResponse();
+            System.out.println("<<<  " + "take answer" + "  >>>");
             printResponse(serverResponse);
         } catch (Exception e) {
             System.out.println("work client error: ");
@@ -114,13 +125,13 @@ class TaskClient extends Thread{
         return ServerResponse.parseFrom(buf);
     }
 
-    //all tasks extends com.google.protobuf.GeneratedMessage
+    //all tasks extend com.google.protobuf.GeneratedMessage
     public ServerRequest makeServerRequest(GeneratedMessage message) {
-        ServerRequest.Builder builder = ServerRequest.newBuilder().setRequestId(requestId).setClientId(clientId);
-        if (message instanceof SubmitTask) builder.setSubmit((SubmitTask)message);
-        if (message instanceof Subscribe) builder.setSubscribe((Subscribe)message);
-        if (message instanceof ListTasks) builder.setList((ListTasks)message);
-        return builder.build();
+        ServerRequest.Builder request = ServerRequest.newBuilder().setRequestId(requestId).setClientId(clientId);
+        if (message instanceof SubmitTask) request.setSubmit((SubmitTask)message);
+        if (message instanceof Subscribe) request.setSubscribe((Subscribe)message);
+        if (message instanceof ListTasks) request.setList((ListTasks)message);
+        return request.build();
     }
 
     SubmitTask makeSubmitTask(){
@@ -145,14 +156,12 @@ class TaskClient extends Thread{
 
         //параметр m
         param.clearParamValue();
-        param.setValue(24);
-//        param.setDependentTaskId(2);
+//        param.setValue(24);
+        param.setDependentTaskId(1);
         task.setM(param.build());
 
         //параметр n
-        param.clearParamValue();
-        param.setValue(23);
-        task.setN(10);
+        task.setN(3_000_000_000l);
 
         return submitTask.setTask(task.build()).build();
     }

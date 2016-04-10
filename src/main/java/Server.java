@@ -41,7 +41,7 @@ public class Server
 class TaskThread extends Thread {
     //static
     static int initialId = 1;
-    static ConcurrentHashMap<Integer, Calculation> taskMap = new ConcurrentHashMap<Integer, Calculation>();
+    static ConcurrentHashMap<Integer, Calculation> taskMap = new ConcurrentHashMap<>();
 //    static Map<Integer, Calculation> taskMap = new ConcurrentHashMap<Integer, Calculation>();
     static int curId;
 
@@ -79,9 +79,7 @@ class TaskThread extends Thread {
             }
 
             socket.close();
-        }
-        catch(Exception e)
-        {
+        } catch(Exception e) {
             System.out.print("work error: ");
             e.printStackTrace();
             System.out.println();
@@ -89,7 +87,6 @@ class TaskThread extends Thread {
     }
 
     void listHandler() throws IOException{
-
         ServerResponse.Builder serverResponse = ServerResponse.newBuilder();
         serverResponse.setRequestId(requestId);
 
@@ -100,7 +97,7 @@ class TaskThread extends Thread {
     }
 
     List<Protocol.ListTasksResponse.TaskDescription> getTasks() {
-        List<ListTasksResponse.TaskDescription> res = new LinkedList<ListTasksResponse.TaskDescription>();
+        List<ListTasksResponse.TaskDescription> res = new LinkedList<>();
         for (Integer taskId: taskMap.keySet()) {
                 Calculation task = taskMap.get(taskId);
 
@@ -125,26 +122,21 @@ class TaskThread extends Thread {
         curId = getNewId();
         taskMap.put(curId, curTaskDescription);
 
-
-        long a = takeParamValue(currentTask.getA());
-        long b = takeParamValue(currentTask.getB());
-        long p = takeParamValue(currentTask.getP());
-        long m = takeParamValue(currentTask.getM());
-        long n = currentTask.getN();
-
-
-        //Решаем задачу
-        if (curTaskDescription.status != Status.Error) {
-            long res = task(a, b, p, m ,n);
-            curTaskDescription.setValue(res);
-        }
+        //Тут могли встетиться ошибки тогда статус будет изменён
+        checkSubmitTaskField(currentTask.getA());
+        checkSubmitTaskField(currentTask.getB());
+        checkSubmitTaskField(currentTask.getM());
+        checkSubmitTaskField(currentTask.getP());
 
         //Отвечаем
+//        Только в случае если поля валидны мы возвращаем статус OK
+//        И производим вычисления иначе ERROR
         ServerResponse.Builder serverResponse = ServerResponse.newBuilder();
         serverResponse.setRequestId(requestId);
 
         SubmitTaskResponse.Builder submitTaskResponse = SubmitTaskResponse.newBuilder();
         submitTaskResponse.setSubmittedTaskId(curId);
+
 
         System.out.println("SubmitTaskResponse: ");
         System.out.println("submittedTaskId: " + curId);
@@ -157,6 +149,17 @@ class TaskThread extends Thread {
         }
 
         sendToClient(serverResponse.setSubmitResponse(submitTaskResponse.build()).build());
+
+        //Решаем задачу
+        if (curTaskDescription.status != Status.Error) {
+            long a = takeParamValue(currentTask.getA());
+            long b = takeParamValue(currentTask.getB());
+            long p = takeParamValue(currentTask.getP());
+            long m = takeParamValue(currentTask.getM());
+            long n = currentTask.getN();
+            long res = task(a, b, p, m ,n);
+            curTaskDescription.setValue(res);
+        }
     }
 
     void subscribeHandler(Subscribe subscribe) throws IOException {
@@ -166,6 +169,8 @@ class TaskThread extends Thread {
 
         SubscribeResponse.Builder subscribeResponse = SubscribeResponse.newBuilder();
 
+        //1) if Пытаемся подписать на задачу которой нет, или на задачу с ошибкой
+        //2) else она существует подписываемся
         if (!taskMap.containsKey(subscribeId) || taskMap.get(subscribeId).status == Status.Error) {
             subscribeResponse.setStatus(Protocol.Status.ERROR);
             sendToClient(serverResponse.setSubscribeResponse(subscribeResponse).build());
@@ -183,21 +188,35 @@ class TaskThread extends Thread {
         message.writeTo(os);
     }
 
+    //Поля уже проверены checkField function
     long takeParamValue(Task.Param param) {
         if (param.hasValue())
         {
             return param.getValue();
         } else {
             //(param.hasDependentTaskId())
-            if (taskMap.containsKey(param.getDependentTaskId()) && param.getDependentTaskId() != curId)
-                return taskMap.get(param.getDependentTaskId()).getValue();
-            else {
-                curTaskDescription.setStatus(Status.Error);
-//                System.out.println(">>><<<");
-                return 0;
-            }
+            return taskMap.get(param.getDependentTaskId()).getValue();
         }
     }
+
+    //проверка на валидность поля в случае подписки
+    void checkSubmitTaskField(Task.Param param){
+        if (param.hasDependentTaskId()) {
+            //Если мапа не содержит ключ, или содержит, но он ссылается на себя самого
+            if (param.getDependentTaskId() == curId) {
+                curTaskDescription.status = Status.Error;
+                return;
+            }
+            if  (!taskMap.containsKey(param.getDependentTaskId()) || taskMap.get(param.getDependentTaskId()).status == Status.Error) {
+                //если пытаемся взять задачу с ERROR
+                curTaskDescription.status = Status.Error;
+            }
+        } else if(!param.hasValue()) {
+            //Если и значения тоже нет
+            curTaskDescription.status = Status.Error;
+        }
+    }
+
 
     long task(long a, long b, long p, long m, long n)
     {
@@ -211,6 +230,7 @@ class TaskThread extends Thread {
             b = (a * p + b) % m;
             a = b;
         }
+
         return a;
     }
 
@@ -222,7 +242,7 @@ class TaskThread extends Thread {
     }
 
     int getNewId() {
-        return ++initialId;
+        return initialId++;
     }
 }
 //информация о каждой задачи
