@@ -116,21 +116,21 @@ class TaskThread extends Thread {
 
     void submitHandler(SubmitTask submitTask) throws IOException{
 
-        //Вытакскиваем поля
+        //Р’С‹С‚Р°РєСЃРєРёРІР°РµРј РїРѕР»СЏ
         Task currentTask = submitTask.getTask();
         curTaskDescription = new Calculation(requestId, clientId, currentTask);
         curId = getNewId();
         taskMap.put(curId, curTaskDescription);
 
-        //Тут могли встетиться ошибки тогда статус будет изменён
+        //РўСѓС‚ РјРѕРіР»Рё РІСЃС‚РµС‚РёС‚СЊСЃСЏ РѕС€РёР±РєРё С‚РѕРіРґР° СЃС‚Р°С‚СѓСЃ Р±СѓРґРµС‚ РёР·РјРµРЅС‘РЅ
         checkSubmitTaskField(currentTask.getA());
         checkSubmitTaskField(currentTask.getB());
         checkSubmitTaskField(currentTask.getM());
         checkSubmitTaskField(currentTask.getP());
 
-        //Отвечаем
-//        Только в случае если поля валидны мы возвращаем статус OK
-//        И производим вычисления иначе ERROR
+        //РћС‚РІРµС‡Р°РµРј
+//        РўРѕР»СЊРєРѕ РІ СЃР»СѓС‡Р°Рµ РµСЃР»Рё РїРѕР»СЏ РІР°Р»РёРґРЅС‹ РјС‹ РІРѕР·РІСЂР°С‰Р°РµРј СЃС‚Р°С‚СѓСЃ OK
+//        Р РїСЂРѕРёР·РІРѕРґРёРј РІС‹С‡РёСЃР»РµРЅРёСЏ РёРЅР°С‡Рµ ERROR
         ServerResponse.Builder serverResponse = ServerResponse.newBuilder();
         serverResponse.setRequestId(requestId);
 
@@ -150,7 +150,7 @@ class TaskThread extends Thread {
 
         sendToClient(serverResponse.setSubmitResponse(submitTaskResponse.build()).build());
 
-        //Решаем задачу
+        //Р РµС€Р°РµРј Р·Р°РґР°С‡Сѓ
         if (curTaskDescription.status != Status.Error) {
             long a = takeParamValue(currentTask.getA());
             long b = takeParamValue(currentTask.getB());
@@ -169,8 +169,8 @@ class TaskThread extends Thread {
 
         SubscribeResponse.Builder subscribeResponse = SubscribeResponse.newBuilder();
 
-        //1) if Пытаемся подписать на задачу которой нет, или на задачу с ошибкой
-        //2) else она существует подписываемся
+        //1) if РџС‹С‚Р°РµРјСЃСЏ РїРѕРґРїРёСЃР°С‚СЊ РЅР° Р·Р°РґР°С‡Сѓ РєРѕС‚РѕСЂРѕР№ РЅРµС‚, РёР»Рё РЅР° Р·Р°РґР°С‡Сѓ СЃ РѕС€РёР±РєРѕР№
+        //2) else РѕРЅР° СЃСѓС‰РµСЃС‚РІСѓРµС‚ РїРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ
         if (!taskMap.containsKey(subscribeId) || taskMap.get(subscribeId).status == Status.Error) {
             subscribeResponse.setStatus(Protocol.Status.ERROR);
             sendToClient(serverResponse.setSubscribeResponse(subscribeResponse).build());
@@ -188,7 +188,7 @@ class TaskThread extends Thread {
         message.writeTo(os);
     }
 
-    //Поля уже проверены checkField function
+    //РџРѕР»СЏ СѓР¶Рµ РїСЂРѕРІРµСЂРµРЅС‹ checkField function
     long takeParamValue(Task.Param param) {
         if (param.hasValue())
         {
@@ -199,20 +199,20 @@ class TaskThread extends Thread {
         }
     }
 
-    //проверка на валидность поля в случае подписки
+    //РїСЂРѕРІРµСЂРєР° РЅР° РІР°Р»РёРґРЅРѕСЃС‚СЊ РїРѕР»СЏ РІ СЃР»СѓС‡Р°Рµ РїРѕРґРїРёСЃРєРё
     void checkSubmitTaskField(Task.Param param){
         if (param.hasDependentTaskId()) {
-            //Если мапа не содержит ключ, или содержит, но он ссылается на себя самого
+            //Р•СЃР»Рё РјР°РїР° РЅРµ СЃРѕРґРµСЂР¶РёС‚ РєР»СЋС‡, РёР»Рё СЃРѕРґРµСЂР¶РёС‚, РЅРѕ РѕРЅ СЃСЃС‹Р»Р°РµС‚СЃСЏ РЅР° СЃРµР±СЏ СЃР°РјРѕРіРѕ
             if (param.getDependentTaskId() == curId) {
                 curTaskDescription.status = Status.Error;
                 return;
             }
             if  (!taskMap.containsKey(param.getDependentTaskId()) || taskMap.get(param.getDependentTaskId()).status == Status.Error) {
-                //если пытаемся взять задачу с ERROR
+                //РµСЃР»Рё РїС‹С‚Р°РµРјСЃСЏ РІР·СЏС‚СЊ Р·Р°РґР°С‡Сѓ СЃ ERROR
                 curTaskDescription.status = Status.Error;
             }
         } else if(!param.hasValue()) {
-            //Если и значения тоже нет
+            //Р•СЃР»Рё Рё Р·РЅР°С‡РµРЅРёСЏ С‚РѕР¶Рµ РЅРµС‚
             curTaskDescription.status = Status.Error;
         }
     }
@@ -245,7 +245,7 @@ class TaskThread extends Thread {
         return initialId++;
     }
 }
-//информация о каждой задачи
+//РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ РєР°Р¶РґРѕР№ Р·Р°РґР°С‡Рё
 class Calculation {
 
     Status status = Status.notReady;

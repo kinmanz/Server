@@ -16,7 +16,7 @@ public class Client {
 //            new TaskClient(i + " second");
 //            new TaskClient(i + " third");
 //        }
-//        new TaskClient("Third", 1, "Submit");
+        new TaskClient("Third", 1, "Submit");
 //        new TaskClient("Third-2", 2, "Submit");
 //        Thread.sleep(200);
         new TaskClient("Second", 3, "Subscribe");
@@ -40,7 +40,7 @@ class TaskClient extends Thread{
 
     public void run(){
         if (task.equals("Subscribe")) {
-            sendMassageAndTakeResponse(makeServerRequest(makeSubscribeTask(2)));
+            sendMassageAndTakeResponse(makeServerRequest(makeSubscribeTask(1)));
         } else if (task.equals("Submit")) {
             sendMassageAndTakeResponse(makeServerRequest(makeSubmitTask()));
         } else {
@@ -53,10 +53,10 @@ class TaskClient extends Thread{
         try {
             socket = new Socket("localhost", Client.PORT_NUMBER );
 
-            //Пишем
+            //РџРёС€РµРј
             SendMessageToServer(request);
             System.out.println("<<<  " + task + "  >>>");
-            // читаем ответ
+            // С‡РёС‚Р°РµРј РѕС‚РІРµС‚
             ServerResponse serverResponse = getServerResponse();
             System.out.println("<<<  " + "take answer" + "  >>>");
             printResponse(serverResponse);
@@ -139,29 +139,29 @@ class TaskClient extends Thread{
         Task.Builder task = Task.newBuilder();
         Task.Param.Builder param = Task.Param.newBuilder();
 
-        //параметр a
+        //РїР°СЂР°РјРµС‚СЂ a
         param.clearParamValue();
         param.setValue(3);
         task.setA(param.build());
 
-        //параметр b
+        //РїР°СЂР°РјРµС‚СЂ b
         param.clearParamValue();
         param.setValue(150);
         task.setB(param.build());
 
-        //параметр p
+        //РїР°СЂР°РјРµС‚СЂ p
         param.clearParamValue();
         param.setValue(24);
         task.setP(param.build());
 
-        //параметр m
+        //РїР°СЂР°РјРµС‚СЂ m
         param.clearParamValue();
 //        param.setValue(24);
         param.setDependentTaskId(1);
         task.setM(param.build());
 
-        //параметр n
-        task.setN(3_000_000_000l);
+        //РїР°СЂР°РјРµС‚СЂ n
+        task.setN(2_000_000_000l);
 
         return submitTask.setTask(task.build()).build();
     }
