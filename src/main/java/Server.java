@@ -182,10 +182,7 @@ class TaskThread extends Thread {
     }
 
     void sendToClient(GeneratedMessage message) throws IOException{
-        InputStream is = socket.getInputStream();
-        OutputStream os = socket.getOutputStream();
-        os.write(message.getSerializedSize());
-        message.writeTo(os);
+        message.writeDelimitedTo(socket.getOutputStream());
     }
 
     //Поля уже проверены checkField function
@@ -235,10 +232,7 @@ class TaskThread extends Thread {
     }
 
     ServerRequest getServerRequest() throws IOException {
-        int size = socket.getInputStream().read();
-        byte buf[] = new byte[size];
-        socket.getInputStream().read(buf);
-        return ServerRequest.parseFrom(buf);
+        return ServerRequest.parseDelimitedFrom(socket.getInputStream());
     }
 
     int getNewId() {
