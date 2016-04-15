@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 //import java.util.concurrent.ConcurrentHashMap;
 import util.ConcurrentHashMap;
 import com.google.protobuf.GeneratedMessage;
@@ -40,7 +41,7 @@ public class Server
 
 class TaskThread extends Thread {
     //static
-    static int initialId = 1;
+    static AtomicInteger initialId = new AtomicInteger(1);
     static ConcurrentHashMap<Integer, Calculation> taskMap = new ConcurrentHashMap<>();
 //    static Map<Integer, Calculation> taskMap = new ConcurrentHashMap<Integer, Calculation>();
     static int curId;
@@ -236,7 +237,7 @@ class TaskThread extends Thread {
     }
 
     int getNewId() {
-        return initialId++;
+        return initialId.getAndIncrement();
     }
 }
 //информация о каждой задачи
